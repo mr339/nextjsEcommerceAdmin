@@ -10,7 +10,11 @@ export default async function handler(
   const { method } = req;
   await mongooseConnect();
   if (method === "GET") {
-    res.status(200).json(await Product.find());
+    if (req.query?.id) {
+      res.status(200).json(await Product.findOne({ _id: req.query.id }));
+    } else {
+      res.status(200).json(await Product.find());
+    }
   }
   if (method === "POST") {
     const { title, description, price } = req.body;
@@ -20,5 +24,21 @@ export default async function handler(
       price,
     });
     res.status(200).json(productDoc);
+  }
+
+  if (method === "PUT") {
+    const { title, description, price, _id } = req.body;
+    await Product.updateOne(
+      { _id },
+      { title: title, description: description, price: price }
+    );
+    res.status(200).json(true);
+  }
+
+  if (method === "DELETE") {
+    if (req.query?.id) {
+      await Product.deleteOne({ _id: req.query.id });
+      res.status(200).json(true);
+    }
   }
 }
