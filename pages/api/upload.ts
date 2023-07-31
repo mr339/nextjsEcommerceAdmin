@@ -1,12 +1,23 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { mongooseConnect } from "@/lib/mongoose";
 import multiparty from "multiparty";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import fs from "fs";
+import mime from "mime-types";
+
+const bucketName = "ganeshdai-testing";
+const accessKeyId = process.env.S3_ACCESS_KEY;
+const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   //   const { method } = req;
+  if (!accessKeyId || !secretAccessKey) {
+    throw new Error("S3 credentials are not set.");
+  }
+
   await mongooseConnect();
   const form = new multiparty.Form();
   const { fields, files } = await new Promise((resolve, reject) => {
@@ -20,18 +31,33 @@ export default async function handler(
     });
   });
 
-  console.log("teststs", files.file);
-  return res.status(200).json("ok");
+  const client = new S3Client({
+    region: "ap-south-1",
+    credentials: {
+      accessKeyId: accessKeyId,
+      secretAccessKey: secretAccessKey,
+    },
+  });
+  const links = [];
+  for (const file of files.file) {
+    const ext = file.originalFilename.split(".").pop();
+    const newFilename = Date.now() + "." + ext;
+    const contentType = mime.lookup(file.path) || "application/octet-stream";
 
-  //   if (method === "POST") {
-  //     const { title, description, price } = req.body;
-  //     const productDoc = await Product.create({
-  //       title,
-  //       description,
-  //       price,
-  //     });
-  //     res.status(200).json(productDoc);
-  //   }
+    await client.send(
+      new PutObjectCommand({
+        Bucket: bucketName,
+        Key: newFilename,
+        Body: fs.readFileSync(file.path),
+        ACL: "public-read",
+        ContentType: contentType,
+      })
+    );
+    const link = `https://${bucketName}.s3.amazonaws.com/${newFilename}`;
+    links.push(link);
+  }
+
+  return res.status(200).json({ links });
 }
 
 export const config = {
