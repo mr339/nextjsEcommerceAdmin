@@ -10,29 +10,30 @@ export default async function handler(
   const { method } = req;
   await mongooseConnect();
   if (method === "GET") {
-    res.status(200).json(await Category.find());
+    res.status(200).json(await Category.find().populate("parent"));
   }
 
   if (method === "POST") {
-    const { categoryName } = req.body;
+    const { categoryName, parentCategory } = req.body;
     const CategoryDoc = await Category.create({
       categoryName,
+      parent: parentCategory,
     });
     res.status(200).json(CategoryDoc);
   }
 
   if (method === "PUT") {
-    const { title, description, price, images, _id } = req.body;
+    const { categoryName, parentCategory, _id } = req.body;
     await Category.updateOne(
       { _id },
-      { title: title, description: description, price: price, images: images }
+      { categoryName: categoryName, parent: parentCategory }
     );
     res.status(200).json(true);
   }
 
   if (method === "DELETE") {
-    if (req.query?.id) {
-      await Category.deleteOne({ _id: req.query.id });
+    if (req.query?._id) {
+      await Category.deleteOne({ _id: req.query._id });
       res.status(200).json(true);
     }
   }
