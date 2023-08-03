@@ -14,19 +14,24 @@ export default async function handler(
   }
 
   if (method === "POST") {
-    const { categoryName, parentCategory } = req.body;
+    const { categoryName, parentCategory, properties } = req.body;
     const CategoryDoc = await Category.create({
       categoryName,
-      parent: parentCategory,
+      parent: parentCategory || undefined,
+      properties,
     });
     res.status(200).json(CategoryDoc);
   }
 
   if (method === "PUT") {
-    const { categoryName, parentCategory, _id } = req.body;
+    const { categoryName, parentCategory, _id, properties } = req.body;
     await Category.updateOne(
       { _id },
-      { categoryName: categoryName, parent: parentCategory }
+      {
+        categoryName: categoryName,
+        parent: parentCategory || undefined,
+        properties,
+      }
     );
     res.status(200).json(true);
   }
