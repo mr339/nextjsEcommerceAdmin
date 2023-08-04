@@ -28,7 +28,7 @@ const Categories = ({ swal }: any) => {
       parentCategory,
       properties: properties.map((p: any) => ({
         name: p.name,
-        values: p.values.split(""),
+        values: p.values.split(","),
       })),
     };
     if (editedCategory) {
@@ -45,9 +45,16 @@ const Categories = ({ swal }: any) => {
   };
 
   const editCategory = (category: any) => {
+    console.log(category);
     setEditedCategory(category);
     setCategoryName(category.categoryName);
     setParentCategory(category.parent?._id);
+    setproperties(
+      category.properties.map(({ name, values }: any) => ({
+        name,
+        values: values.join(","),
+      }))
+    );
   };
 
   const addProperty = () => {
@@ -182,7 +189,8 @@ const Categories = ({ swal }: any) => {
               onClick={() => {
                 setEditedCategory(null),
                   setCategoryName(""),
-                  setParentCategory("");
+                  setParentCategory(""),
+                  setproperties([]);
               }}
               className="btn-default"
             >

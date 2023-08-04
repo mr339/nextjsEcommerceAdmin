@@ -10,15 +10,19 @@ const ProductForm = ({
   description: existingDescription,
   price: existingPrice,
   images: existingImages,
-  category: assingedCategory,
+  category: assigned,
+  properties: assignedProperty,
 }: any) => {
   const [title, setTitle] = useState(existingTitle || "");
   const [description, setDescription] = useState(existingDescription || "");
   const [price, setPrice] = useState(existingPrice || "");
+  const [productProperties, setProductProperties] = useState<any>(
+    assignedProperty || {}
+  );
   const [categories, setCategories] = useState([]);
   const [gotoProducts, setGotoProducts] = useState(false);
   const [images, setImages] = useState(existingImages || []);
-  const [category, setCategory] = useState(assingedCategory || "");
+  const [category, setCategory] = useState(assigned || "");
   const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
 
@@ -30,7 +34,14 @@ const ProductForm = ({
 
   const saveProduct = async (ev: any) => {
     ev.preventDefault();
-    const data = { title, description, price, images, category };
+    const data = {
+      title,
+      description,
+      price,
+      images,
+      category,
+      properties: productProperties,
+    };
     if (_id) {
       await axios.put("/api/products", { ...data, _id });
     } else {
@@ -63,6 +74,28 @@ const ProductForm = ({
     setImages(images);
   };
 
+  const propertiesToFill = [];
+  if (categories.length > 0 && category) {
+    let catInfo: any = categories.find(({ _id }: any) => _id === category);
+    propertiesToFill.push(...catInfo?.properties);
+    while (catInfo?.parent?._id) {
+      //checking if the selected category has a parent and trying to find out the properties of parent
+      const parentCat: any = categories.find(
+        ({ _id }: any) => _id === catInfo?.parent?._id
+      );
+      propertiesToFill.push(...parentCat?.properties);
+      catInfo = parentCat;
+    }
+  }
+
+  const setProductProp = (propName: any, value: any) => {
+    setProductProperties((prev: any) => {
+      const newProductProps: any = { ...prev };
+      newProductProps[propName] = value;
+      return newProductProps;
+    });
+  };
+
   return (
     <form onSubmit={saveProduct}>
       <label>Product</label>
@@ -82,6 +115,20 @@ const ProductForm = ({
             </option>
           ))}
       </select>
+      {propertiesToFill.length > 0 &&
+        propertiesToFill.map((p: any) => (
+          <div className="flex gap-1">
+            <div>{p.name}</div>
+            <select
+              value={productProperties[p.name]}
+              onChange={(ev: any) => setProductProp(p.name, ev.target.value)}
+            >
+              {p.values.map((v: any) => (
+                <option value={v}>{v}</option>
+              ))}
+            </select>
+          </div>
+        ))}
       <label>Photos</label>
       <div className="mb-2 flex flex-wrap gap-1">
         <ReactSortable
