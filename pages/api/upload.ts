@@ -4,6 +4,7 @@ import multiparty from "multiparty";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import fs from "fs";
 import mime from "mime-types";
+import { isAdminRequest } from "@/pages/api/auth/[...nextauth]";
 
 const bucketName = "ganeshdai-testing";
 const accessKeyId = process.env.S3_ACCESS_KEY;
@@ -19,6 +20,11 @@ export default async function handler(
   }
 
   await mongooseConnect();
+  try {
+    await isAdminRequest(req, res);
+  } catch (error) {
+    throw "Not an admin. Access denied!";
+  }
   const form = new multiparty.Form();
   const { fields, files } = await new Promise((resolve, reject) => {
     form.parse(req, (err, fields, files) => {

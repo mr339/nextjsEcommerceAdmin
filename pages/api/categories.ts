@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { mongooseConnect } from "@/lib/mongoose";
 import { Category } from "@/models/category";
+import { isAdminRequest } from "@/pages/api/auth/[...nextauth]";
 
 export default async function handler(
   req: NextApiRequest,
@@ -9,6 +10,11 @@ export default async function handler(
 ) {
   const { method } = req;
   await mongooseConnect();
+  try {
+    await isAdminRequest(req, res);
+  } catch (error) {
+    throw "Not an admin. Access denied!";
+  }
   if (method === "GET") {
     res.status(200).json(await Category.find().populate("parent"));
   }
