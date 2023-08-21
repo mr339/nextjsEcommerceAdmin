@@ -8,7 +8,7 @@ export default function Layout({ children }: any) {
   const [showNav, setShowNav] = useState(false);
   if (!session) {
     return (
-      <div className="bg-bgGray w-screen h-screen flex items-center">
+      <div className="bg-green-800 w-screen h-screen flex items-center">
         <div className="text-center w-full">
           <button
             className="bg-white p-2 px-4 rounded-lg"
@@ -41,7 +41,7 @@ export default function Layout({ children }: any) {
           </svg>
         </button>
         <div className="flex grow justify-center">
-        <Logo />
+          <Logo />
         </div>
       </div>
       <div className="flex">
